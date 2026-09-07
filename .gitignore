@@ -1,0 +1,16 @@
+# Env files (credentials)
+.env
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Angular build artifacts
+dist/
+.angular/
+
+# System files
+.DS_Store
+Thumbs.db

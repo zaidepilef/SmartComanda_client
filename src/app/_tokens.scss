@@ -1,0 +1,56 @@
+@mixin dark-tokens {
+  --bg: #431407;
+  --surface: #7c2d12;
+  --ink: #ffedd5;
+  --muted: #efb08a;
+  --accent: #fdba74;
+  --accent-contrast: #431407;
+  --border: #9a3412;
+  --shadow: 0 6px 24px rgb(0 0 0 / 40%);
+  --error: #f87171;
+  --error-bg: #7f1d1d;
+  --error-ink: #ffffff;
+  --badge-bg: #78350f;
+  --badge-ink: #fde68a;
+  --overlay: rgb(0 0 0 / 60%);
+}
+
+:root {
+  --bg: #fff7ed;
+  --surface: #ffffff;
+  --ink: #7c2d12;
+  --muted: #b45309;
+  --accent: #c2410c;
+  --accent-contrast: #ffffff;
+  --border: #ffedd5;
+  --shadow: 0 6px 24px rgb(124 45 18 / 12%);
+  --error: #c0392b;
+  --error-bg: #7f1d1d;
+  --error-ink: #ffffff;
+  --badge-bg: #fff3d6;
+  --badge-ink: #8a5a00;
+  --overlay: rgb(0 0 0 / 45%);
+  --radius: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark-tokens;
+  }
+}
+
+:root[data-theme='dark'] {
+  @include dark-tokens;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', sans-serif;
+}

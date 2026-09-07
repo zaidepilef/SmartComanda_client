@@ -1,0 +1,192 @@
+@if (store.step() === 'phone') {
+  <section class="screen phone-screen">
+    <app-theme-toggle />
+    <h1>Bienvenido 👋</h1>
+    <p class="subtitle">Dejanos tu WhatsApp para armar tu pedido</p>
+
+    <form (ngSubmit)="savePhone()" class="phone-form">
+      <label for="phone">WhatsApp</label>
+      <input
+        id="phone"
+        type="tel"
+        inputmode="tel"
+        placeholder="+56912345678"
+        [(ngModel)]="phoneInput"
+        name="phone"
+        autocomplete="tel"
+      />
+
+      @if (phoneError()) {
+        <p class="field-error">{{ phoneError() }}</p>
+      }
+
+      <button type="submit" [disabled]="!canSubmitPhone()">Continuar</button>
+    </form>
+  </section>
+}
+
+@if (store.step() === 'menu' && store.menu(); as menu) {
+  <section class="screen menu-screen">
+    <header class="menu-header">
+      <app-theme-toggle />
+      <h1>{{ menu.tenancy.businessName }}</h1>
+      <p class="subtitle">{{ menu.tenancy.branchName }}</p>
+
+      @if (pointsLabel()) {
+        <p class="points-label">⭐ {{ pointsLabel() }}</p>
+      }
+    </header>
+
+    <input
+      class="search"
+      type="search"
+      placeholder="Buscar plato..."
+      [(ngModel)]="query"
+      name="query"
+    />
+
+    <nav class="categories">
+      <button
+        [class.active]="activeCategory() === 'all'"
+        (click)="activeCategory.set('all')"
+      >
+        Todos
+      </button>
+
+      @for (category of store.categories(); track category.name) {
+        <button
+          [class.active]="activeCategory() === category.name"
+          (click)="activeCategory.set(category.name)"
+        >
+          {{ category.icon }} {{ category.name }}
+        </button>
+      }
+    </nav>
+
+    <div class="dish-grid">
+      @for (dish of visibleDishes(); track dish.id) {
+        <button class="dish-card" (click)="openDish(dish)">
+          <span class="dish-icon">{{ dish.icon ?? '🍽️' }}</span>
+          <span class="dish-name">{{ dish.name }}</span>
+          @if (dish.description) {
+            <span class="dish-description">{{ dish.description }}</span>
+          }
+          <span class="dish-price">{{ formatPrice(dish.price) }}</span>
+        </button>
+      } @empty {
+        <p class="empty">Sin platos disponibles.</p>
+      }
+    </div>
+
+    @if (store.cartCount() > 0) {
+      <button class="cart-bar" (click)="cartVisible.set(true)">
+        🛒 Ver pedido ({{ store.cartCount() }}) · {{ formatPrice(store.cartTotal()) }}
+      </button>
+    }
+
+    @if (cartVisible()) {
+      <div class="overlay" (click)="cartVisible.set(false)">
+        <section class="cart-panel" (click)="$event.stopPropagation()">
+          <h2>Tu pedido</h2>
+
+          @for (item of store.cart(); track item.dish.id) {
+            <div class="cart-item">
+              <div class="cart-item-info">
+                <span>{{ item.dish.name }}</span>
+                <span class="muted">{{ formatPrice(item.dish.price) }} c/u</span>
+              </div>
+
+              <div class="stepper">
+                <button
+                  (click)="store.changeQuantity(item.dish.id, item.quantity - 1)"
+                >
+                  −
+                </button>
+                <span>{{ item.quantity }}</span>
+                <button
+                  (click)="store.changeQuantity(item.dish.id, item.quantity + 1)"
+                >
+                  +
+                </button>
+              </div>
+
+              <span class="cart-item-total">
+                {{ formatPrice(item.dish.price * item.quantity) }}
+              </span>
+            </div>
+          }
+
+          <div class="cart-total">
+            <span>Total</span>
+            <strong>{{ formatPrice(store.cartTotal()) }}</strong>
+          </div>
+
+          <button
+            class="confirm"
+            [disabled]="submitting()"
+            (click)="submitOrder()"
+          >
+            {{ submitting() ? 'Enviando...' : 'Enviar pedido' }}
+          </button>
+
+          <p class="pay-note">💵 Pagás en caja con tu número de pedido.</p>
+        </section>
+      </div>
+    }
+
+    @if (selectedDish(); as dish) {
+      <div class="overlay" (click)="closeDish()">
+        <section class="dish-panel" (click)="$event.stopPropagation()">
+          <span class="dish-icon large">{{ dish.icon ?? '🍽️' }}</span>
+          <h2>{{ dish.name }}</h2>
+
+          @if (dish.description) {
+            <p class="muted">{{ dish.description }}</p>
+          }
+
+          <p class="dish-price large">{{ formatPrice(dish.price) }}</p>
+
+          <div class="stepper">
+            <button (click)="selectedQuantity.set(selectedQuantity() - 1)" [disabled]="selectedQuantity() <= 1">
+              −
+            </button>
+            <span>{{ selectedQuantity() }}</span>
+            <button (click)="selectedQuantity.set(selectedQuantity() + 1)">+</button>
+          </div>
+
+          <button class="confirm" (click)="confirmDish()">
+            Agregar · {{ formatPrice(dish.price * selectedQuantity()) }}
+          </button>
+        </section>
+      </div>
+    }
+  </section>
+}
+
+@if (store.step() === 'success' && store.orderResult(); as result) {
+  <section class="screen success-screen">
+    <h1>✅ Pedido enviado</h1>
+
+    <p class="order-number">
+      Tu número de pedido es
+      <strong>#{{ result.number }}</strong>
+    </p>
+
+    <p class="subtitle">Total a pagar: {{ formatPrice(result.total) }}</p>
+    <p class="subtitle">💵 Pagá en caja con este número.</p>
+
+    @if (result.pointsRate) {
+      <p class="points-label">
+        ⭐ Por este pedido ganarás
+        <strong>{{ getEarnedPoints(result) }}</strong> puntos
+        (saldo actual: {{ result.pointsBalance }})
+      </p>
+    }
+
+    <button (click)="switchTo('menu')">Hacer otro pedido</button>
+  </section>
+}
+
+@if (store.error()) {
+  <p class="global-error">{{ store.error() }}</p>
+}
