@@ -27,6 +27,7 @@ export interface CreateOrderItemInput {
 export interface CreateOrderInput {
   tenantId: string;
   branchId: string;
+  name: string;
   phone: string;
   items: CreateOrderItemInput[];
 }
@@ -52,6 +53,7 @@ export interface CartItem {
 export type OrderStep = 'phone' | 'menu' | 'success';
 
 const PHONE_KEY = (tenantId: string) => `sc_phone_${tenantId}`;
+const NAME_KEY = (tenantId: string) => `sc_name_${tenantId}`;
 
 @Injectable({ providedIn: 'root' })
 export class OrderStore {
@@ -66,6 +68,11 @@ export class OrderStore {
   readonly phone = computed(() => {
     const tenantId = this.tenantId();
     return tenantId ? localStorage.getItem(PHONE_KEY(tenantId)) ?? '' : '';
+  });
+
+  readonly name = computed(() => {
+    const tenantId = this.tenantId();
+    return tenantId ? localStorage.getItem(NAME_KEY(tenantId)) ?? '' : '';
   });
 
   readonly branchDishes = computed(() => {
@@ -101,17 +108,18 @@ export class OrderStore {
     this.branchId.set(branchId);
     this.error.set(null);
 
-    if (this.phone()) {
+    if (this.name() && this.phone()) {
       this.step.set('menu');
     } else {
       this.step.set('phone');
     }
   }
 
-  setPhone(phone: string): void {
+  saveIdentity(name: string, phone: string): void {
     const tenantId = this.tenantId();
 
     if (tenantId) {
+      localStorage.setItem(NAME_KEY(tenantId), name);
       localStorage.setItem(PHONE_KEY(tenantId), phone);
     }
 

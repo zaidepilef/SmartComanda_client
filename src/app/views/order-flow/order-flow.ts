@@ -10,6 +10,7 @@ import { CreateOrderResult, MenuDish } from '../../services/order-store.service'
 import { ThemeToggle } from '../../components/theme-toggle/theme-toggle';
 
 const PHONE_PATTERN = /^\+?[0-9]{9,15}$/;
+const NAME_MAX_LENGTH = 80;
 
 @Component({
   selector: 'app-order-flow',
@@ -22,6 +23,7 @@ export class OrderFlowView implements OnInit {
   private readonly api = inject(PublicApiService);
   readonly store = inject(OrderStore);
 
+  readonly nameInput = signal('');
   readonly phoneInput = signal('');
   readonly query = signal('');
   readonly activeCategory = signal('all');
@@ -29,6 +31,18 @@ export class OrderFlowView implements OnInit {
   readonly selectedQuantity = signal(1);
   readonly submitting = signal(false);
   readonly cartVisible = signal(false);
+
+  readonly nameError = computed(() => {
+    const value = this.nameInput().trim();
+
+    if (value === '') {
+      return null;
+    }
+
+    return value.length <= NAME_MAX_LENGTH
+      ? null
+      : `El nombre no puede superar ${NAME_MAX_LENGTH} caracteres.`;
+  });
 
   readonly phoneError = computed(() => {
     const value = this.phoneInput().trim();
@@ -40,7 +54,11 @@ export class OrderFlowView implements OnInit {
     return PHONE_PATTERN.test(value) ? null : 'Ingresa un teléfono válido (ej. +56912345678).';
   });
 
-  readonly canSubmitPhone = computed(() => PHONE_PATTERN.test(this.phoneInput().trim()));
+  readonly canSubmitPhone = computed(() => {
+    const name = this.nameInput().trim();
+    const phone = this.phoneInput().trim();
+    return name !== '' && name.length <= NAME_MAX_LENGTH && PHONE_PATTERN.test(phone);
+  });
 
   readonly visibleDishes = computed(() => {
     const term = this.query().trim().toLowerCase();
@@ -73,6 +91,7 @@ export class OrderFlowView implements OnInit {
     const tenantId = this.route.snapshot.paramMap.get('tenantId');
     const branchId = this.route.snapshot.paramMap.get('branchId');
 
+    this.nameInput.set(this.store.name());
     this.phoneInput.set(this.store.phone());
 
     if (!tenantId || !branchId) {
@@ -96,7 +115,7 @@ export class OrderFlowView implements OnInit {
   }
 
   savePhone(): void {
-    this.store.setPhone(this.phoneInput().trim());
+    this.store.saveIdentity(this.nameInput().trim(), this.phoneInput().trim());
   }
 
   openDish(dish: MenuDish): void {
@@ -138,6 +157,7 @@ export class OrderFlowView implements OnInit {
         this.api.createOrder({
           tenantId,
           branchId,
+          name: this.store.name(),
           phone: this.store.phone(),
           items: this.store.cart().map((item) => ({
             dishId: item.dish.id,

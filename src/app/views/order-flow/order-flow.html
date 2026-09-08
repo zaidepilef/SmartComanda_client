@@ -2,9 +2,25 @@
   <section class="screen phone-screen">
     <app-theme-toggle />
     <h1>Bienvenido 👋</h1>
-    <p class="subtitle">Dejanos tu WhatsApp para armar tu pedido</p>
+    <p class="subtitle">Dejanos tu nombre y tu WhatsApp para armar tu pedido</p>
 
     <form (ngSubmit)="savePhone()" class="phone-form">
+      <label for="name">Nombre</label>
+      <input
+        id="name"
+        type="text"
+        inputmode="text"
+        placeholder="Tu nombre"
+        [(ngModel)]="nameInput"
+        name="name"
+        autocomplete="name"
+        [maxlength]="80"
+      />
+
+      @if (nameError()) {
+        <p class="field-error">{{ nameError() }}</p>
+      }
+
       <label for="phone">WhatsApp</label>
       <input
         id="phone"
