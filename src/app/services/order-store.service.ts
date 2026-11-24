@@ -24,13 +24,41 @@ export interface CreateOrderItemInput {
   quantity: number;
 }
 
+/** Retiro en local (`qr`) o a domicilio (`delivery`). */
+export type FulfillmentType = 'qr' | 'delivery';
+
+export interface DeliveryInput {
+  address: string;
+  reference?: string;
+  lat?: number;
+  lng?: number;
+  accuracy?: number;
+  /** La dirección vino del mapa (no la escribió el cliente): se actualiza al mover el punto. */
+  addressFromMap?: boolean;
+}
+
+/** Estimación de llegada que calcula el servidor (sin coordenadas de la sucursal). */
+export interface DeliveryEstimate {
+  distanceKm: number;
+  etaMinutes: number;
+  outOfRange: boolean;
+}
+
+export interface DeliveryEstimateResult {
+  estimate: DeliveryEstimate | null;
+}
+
 export interface CreateOrderInput {
   tenantId: string;
   branchId: string;
   name: string;
   phone: string;
+  orderType: FulfillmentType;
+  delivery?: Omit<DeliveryInput, 'addressFromMap'>;
   items: CreateOrderItemInput[];
 }
+
+export const DELIVERY_ADDRESS_MIN_LENGTH = 5;
 
 export interface CreateOrderResult {
   number: number;
@@ -38,6 +66,10 @@ export interface CreateOrderResult {
   total: number;
   pointsRate: number | null;
   pointsBalance: number;
+  orderType?: FulfillmentType;
+  deliveryEtaMinutes?: number | null;
+  deliveryDistanceKm?: number | null;
+  deliveryOutOfRange?: boolean | null;
 }
 
 export interface CustomerBalance {
@@ -54,6 +86,9 @@ export type OrderStep = 'phone' | 'menu' | 'success';
 
 const PHONE_KEY = (tenantId: string) => `sc_phone_${tenantId}`;
 const NAME_KEY = (tenantId: string) => `sc_name_${tenantId}`;
+const DELIVERY_KEY = (tenantId: string) => `sc_delivery_${tenantId}`;
+
+const EMPTY_DELIVERY: DeliveryInput = { address: '' };
 
 // localStorage puede fallar (p. ej. navegación privada); el pedido no debe depender de él.
 function readStorage(key: string): string {
@@ -72,6 +107,26 @@ function writeStorage(key: string, value: string): void {
   }
 }
 
+function readDelivery(tenantId: string): DeliveryInput {
+  try {
+    const parsed = JSON.parse(readStorage(DELIVERY_KEY(tenantId)) || 'null');
+
+    if (parsed && typeof parsed.address === 'string') {
+      return {
+        address: parsed.address,
+        reference: typeof parsed.reference === 'string' ? parsed.reference : undefined,
+        lat: Number.isFinite(parsed.lat) ? parsed.lat : undefined,
+        lng: Number.isFinite(parsed.lng) ? parsed.lng : undefined,
+        accuracy: Number.isFinite(parsed.accuracy) ? parsed.accuracy : undefined,
+      };
+    }
+  } catch {
+    // Valor corrupto: se ignora.
+  }
+
+  return EMPTY_DELIVERY;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrderStore {
   readonly tenantId = signal<string | null>(null);
@@ -86,6 +141,10 @@ export class OrderStore {
   // un computed quedaba con el valor vacío tras llenar el formulario.
   readonly phone = signal('');
   readonly name = signal('');
+
+  readonly fulfillment = signal<FulfillmentType>('qr');
+  readonly delivery = signal<DeliveryInput>(EMPTY_DELIVERY);
+  readonly deliveryEstimate = signal<DeliveryEstimate | null>(null);
 
   readonly branchDishes = computed(() => {
     const menu = this.menu();
@@ -121,6 +180,7 @@ export class OrderStore {
     this.error.set(null);
     this.name.set(readStorage(NAME_KEY(tenantId)));
     this.phone.set(readStorage(PHONE_KEY(tenantId)));
+    this.delivery.set(readDelivery(tenantId));
 
     if (this.name() && this.phone()) {
       this.step.set('menu');
@@ -187,6 +247,15 @@ export class OrderStore {
 
   clearCart(): void {
     this.cart.set([]);
+  }
+
+  /** Recuerda la última dirección para el próximo pedido a domicilio (solo en este teléfono). */
+  rememberDelivery(delivery: DeliveryInput): void {
+    const tenantId = this.tenantId();
+
+    if (tenantId) {
+      writeStorage(DELIVERY_KEY(tenantId), JSON.stringify(delivery));
+    }
   }
 
   confirm(result: CreateOrderResult): void {

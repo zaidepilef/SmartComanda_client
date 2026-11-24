@@ -7,6 +7,7 @@ import {
   CreateOrderInput,
   CreateOrderResult,
   CustomerBalance,
+  DeliveryEstimateResult,
   PublicMenu,
 } from './order-store.service';
 
@@ -30,6 +31,16 @@ export class PublicApiService {
     return this.http.post<CreateOrderResult>(`${this.baseUrl}/api/public/orders`, input, {
       headers,
     });
+  }
+
+  /** Distancia y minutos estimados desde la sucursal hasta el punto del cliente. */
+  getDeliveryEstimate(input: {
+    tenantId: string;
+    branchId: string;
+    lat: number;
+    lng: number;
+  }): Observable<DeliveryEstimateResult> {
+    return this.http.post<DeliveryEstimateResult>(`${this.baseUrl}/api/public/delivery-estimate`, input);
   }
 
   getBalance(

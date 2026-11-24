@@ -290,3 +290,23 @@ button:disabled {
   margin: 0;
   z-index: 50;
 }
+.fulfillment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.fulfillment button {
+  padding: 12px 8px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.fulfillment button.active {
+  border-color: var(--accent);
+  background: var(--badge-bg);
+  color: var(--ink);
+}

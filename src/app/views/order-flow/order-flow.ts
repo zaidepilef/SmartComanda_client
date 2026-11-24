@@ -8,15 +8,23 @@ import { lastValueFrom } from 'rxjs';
 import { OrderStore } from '../../services/order-store.service';
 import { PublicApiService } from '../../services/public-api.service';
 import { JourneyService } from '../../services/journey.service';
-import { CartItem, CreateOrderResult, MenuDish } from '../../services/order-store.service';
+import {
+  CartItem,
+  CreateOrderInput,
+  CreateOrderResult,
+  DELIVERY_ADDRESS_MIN_LENGTH,
+  FulfillmentType,
+  MenuDish,
+} from '../../services/order-store.service';
 import { ThemeToggle } from '../../components/theme-toggle/theme-toggle';
+import { DeliveryLocation } from '../../components/delivery-location/delivery-location';
 
 const PHONE_PATTERN = /^\+?[0-9]{9,15}$/;
 const NAME_MAX_LENGTH = 80;
 
 @Component({
   selector: 'app-order-flow',
-  imports: [CommonModule, FormsModule, ThemeToggle],
+  imports: [CommonModule, FormsModule, ThemeToggle, DeliveryLocation],
   templateUrl: './order-flow.html',
   styleUrl: './order-flow.scss',
 })
@@ -61,6 +69,18 @@ export class OrderFlowView implements OnInit {
     const name = this.nameInput().trim();
     const phone = this.phoneInput().trim();
     return name !== '' && name.length <= NAME_MAX_LENGTH && PHONE_PATTERN.test(phone);
+  });
+
+  /** Domicilio exige una dirección mínima; retiro en local no pide nada más. */
+  readonly canSubmitOrder = computed(() => {
+    if (this.store.cartCount() === 0) {
+      return false;
+    }
+
+    return (
+      this.store.fulfillment() !== 'delivery' ||
+      this.store.delivery().address.trim().length >= DELIVERY_ADDRESS_MIN_LENGTH
+    );
   });
 
   readonly visibleDishes = computed(() => {
@@ -153,6 +173,10 @@ export class OrderFlowView implements OnInit {
     });
   }
 
+  setFulfillment(type: FulfillmentType): void {
+    this.store.fulfillment.set(type);
+  }
+
   openDish(dish: MenuDish): void {
     this.selectedDish.set(dish);
     this.selectedQuantity.set(1);
@@ -182,7 +206,7 @@ export class OrderFlowView implements OnInit {
     const tenantId = this.store.tenantId();
     const branchId = this.store.branchId();
 
-    if (!tenantId || !branchId || this.store.cartCount() === 0) {
+    if (!tenantId || !branchId || !this.canSubmitOrder()) {
       return;
     }
 
@@ -194,18 +218,35 @@ export class OrderFlowView implements OnInit {
     });
 
     try {
-      const result = await lastValueFrom(
-        this.api.createOrder({
-          tenantId,
-          branchId,
-          name: this.store.name(),
-          phone: this.store.phone(),
-          items: this.store.cart().map((item) => ({
-            dishId: item.dish.id,
-            quantity: item.quantity,
-          })),
-        }, this.journey.sessionId)
-      );
+      const orderType = this.store.fulfillment();
+      const input: CreateOrderInput = {
+        tenantId,
+        branchId,
+        name: this.store.name(),
+        phone: this.store.phone(),
+        orderType,
+        items: this.store.cart().map((item) => ({
+          dishId: item.dish.id,
+          quantity: item.quantity,
+        })),
+      };
+
+      if (orderType === 'delivery') {
+        const { address, reference, lat, lng, accuracy } = this.store.delivery();
+        input.delivery = {
+          address: address.trim(),
+          reference: reference?.trim() || undefined,
+          lat,
+          lng,
+          accuracy,
+        };
+      }
+
+      const result = await lastValueFrom(this.api.createOrder(input, this.journey.sessionId));
+
+      if (orderType === 'delivery') {
+        this.store.rememberDelivery(this.store.delivery());
+      }
 
       this.store.confirm(result);
     } catch (error) {
