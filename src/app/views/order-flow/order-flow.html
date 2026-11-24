@@ -95,7 +95,7 @@
     </div>
 
     @if (store.cartCount() > 0) {
-      <button class="cart-bar" (click)="cartVisible.set(true)">
+      <button class="cart-bar" (click)="openCart()">
         🛒 Ver pedido ({{ store.cartCount() }}) · {{ formatPrice(store.cartTotal()) }}
       </button>
     }
@@ -114,13 +114,13 @@
 
               <div class="stepper">
                 <button
-                  (click)="store.changeQuantity(item.dish.id, item.quantity - 1)"
+                  (click)="changeQuantity(item, -1)"
                 >
                   −
                 </button>
                 <span>{{ item.quantity }}</span>
                 <button
-                  (click)="store.changeQuantity(item.dish.id, item.quantity + 1)"
+                  (click)="changeQuantity(item, 1)"
                 >
                   +
                 </button>
@@ -137,15 +137,49 @@
             <strong>{{ formatPrice(store.cartTotal()) }}</strong>
           </div>
 
+          <div class="fulfillment" role="radiogroup" aria-label="¿Cómo recibes tu pedido?">
+            <button
+              type="button"
+              role="radio"
+              [attr.aria-checked]="store.fulfillment() === 'qr'"
+              [class.active]="store.fulfillment() === 'qr'"
+              (click)="setFulfillment('qr')"
+            >
+              🏪 Retiro en local
+            </button>
+            <button
+              type="button"
+              role="radio"
+              [attr.aria-checked]="store.fulfillment() === 'delivery'"
+              [class.active]="store.fulfillment() === 'delivery'"
+              (click)="setFulfillment('delivery')"
+            >
+              🛵 Domicilio
+            </button>
+          </div>
+
+          @if (store.fulfillment() === 'delivery') {
+            <app-delivery-location
+              [tenantId]="store.tenantId()!"
+              [branchId]="store.branchId()!"
+              [(delivery)]="store.delivery"
+              [(estimate)]="store.deliveryEstimate"
+            />
+          }
+
           <button
             class="confirm"
-            [disabled]="submitting()"
+            [disabled]="submitting() || !canSubmitOrder()"
             (click)="submitOrder()"
           >
             {{ submitting() ? 'Enviando...' : 'Enviar pedido' }}
           </button>
 
-          <p class="pay-note">💵 Pagás en caja con tu número de pedido.</p>
+          @if (store.fulfillment() === 'delivery') {
+            <p class="pay-note">El local confirmará tu pedido y la forma de pago.</p>
+          } @else {
+            <p class="pay-note">💵 Pagás en caja con tu número de pedido.</p>
+          }
         </section>
       </div>
     }
@@ -189,7 +223,14 @@
     </p>
 
     <p class="subtitle">Total a pagar: {{ formatPrice(result.total) }}</p>
-    <p class="subtitle">💵 Pagá en caja con este número.</p>
+    @if (result.orderType === 'delivery') {
+      @if (result.deliveryEtaMinutes) {
+        <p class="subtitle">🛵 Llegada estimada: ~{{ result.deliveryEtaMinutes }} min después de prepararlo.</p>
+      }
+      <p class="subtitle">El local confirmará tu pedido y la forma de pago.</p>
+    } @else {
+      <p class="subtitle">💵 Pagá en caja con este número.</p>
+    }
 
     @if (result.pointsRate) {
       <p class="points-label">

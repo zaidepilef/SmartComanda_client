@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment';
@@ -7,6 +7,7 @@ import {
   CreateOrderInput,
   CreateOrderResult,
   CustomerBalance,
+  DeliveryEstimateResult,
   PublicMenu,
 } from './order-store.service';
 
@@ -21,11 +22,25 @@ export class PublicApiService {
     });
   }
 
-  createOrder(input: CreateOrderInput): Observable<CreateOrderResult> {
-    return this.http.post<CreateOrderResult>(
-      `${this.baseUrl}/api/public/orders`,
-      input
-    );
+  /** journeySessionId vincula el resultado del pedido al recorrido del cliente. */
+  createOrder(input: CreateOrderInput, journeySessionId?: string | null): Observable<CreateOrderResult> {
+    const headers = journeySessionId
+      ? new HttpHeaders({ 'X-Journey-Session': journeySessionId })
+      : undefined;
+
+    return this.http.post<CreateOrderResult>(`${this.baseUrl}/api/public/orders`, input, {
+      headers,
+    });
+  }
+
+  /** Distancia y minutos estimados desde la sucursal hasta el punto del cliente. */
+  getDeliveryEstimate(input: {
+    tenantId: string;
+    branchId: string;
+    lat: number;
+    lng: number;
+  }): Observable<DeliveryEstimateResult> {
+    return this.http.post<DeliveryEstimateResult>(`${this.baseUrl}/api/public/delivery-estimate`, input);
   }
 
   getBalance(
