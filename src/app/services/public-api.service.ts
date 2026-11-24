@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment';
@@ -21,11 +21,15 @@ export class PublicApiService {
     });
   }
 
-  createOrder(input: CreateOrderInput): Observable<CreateOrderResult> {
-    return this.http.post<CreateOrderResult>(
-      `${this.baseUrl}/api/public/orders`,
-      input
-    );
+  /** journeySessionId vincula el resultado del pedido al recorrido del cliente. */
+  createOrder(input: CreateOrderInput, journeySessionId?: string | null): Observable<CreateOrderResult> {
+    const headers = journeySessionId
+      ? new HttpHeaders({ 'X-Journey-Session': journeySessionId })
+      : undefined;
+
+    return this.http.post<CreateOrderResult>(`${this.baseUrl}/api/public/orders`, input, {
+      headers,
+    });
   }
 
   getBalance(

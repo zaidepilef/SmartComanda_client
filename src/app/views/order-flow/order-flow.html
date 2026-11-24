@@ -95,7 +95,7 @@
     </div>
 
     @if (store.cartCount() > 0) {
-      <button class="cart-bar" (click)="cartVisible.set(true)">
+      <button class="cart-bar" (click)="openCart()">
         🛒 Ver pedido ({{ store.cartCount() }}) · {{ formatPrice(store.cartTotal()) }}
       </button>
     }
@@ -114,13 +114,13 @@
 
               <div class="stepper">
                 <button
-                  (click)="store.changeQuantity(item.dish.id, item.quantity - 1)"
+                  (click)="changeQuantity(item, -1)"
                 >
                   −
                 </button>
                 <span>{{ item.quantity }}</span>
                 <button
-                  (click)="store.changeQuantity(item.dish.id, item.quantity + 1)"
+                  (click)="changeQuantity(item, 1)"
                 >
                   +
                 </button>
