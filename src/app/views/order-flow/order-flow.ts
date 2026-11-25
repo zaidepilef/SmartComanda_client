@@ -10,7 +10,7 @@ import {
   NAME_MAX_LENGTH,
   OrderStore,
 } from '../../services/order-store.service';
-import { ExpectedPaymentMethod, MenuDish } from '../../services/api-types';
+import { DeliveryEstimate, ExpectedPaymentMethod, MenuDish } from '../../services/api-types';
 import { ActiveOrderService } from '../../services/active-order.service';
 import { PublicApiService } from '../../services/public-api.service';
 import { JourneyService } from '../../services/journey.service';
@@ -177,7 +177,21 @@ export class OrderFlowView implements OnInit {
 
   continueAddress(): void {
     if (this.store.addressReady()) {
+      this.journey.track({ type: 'address_confirmed', data: { source: this.store.addressChoice().kind } });
       this.store.goTo('menu');
+    }
+  }
+
+  /** Guarda la estimación y registra una vez cada vez que el punto queda fuera de cobertura. */
+  onEstimate(estimate: DeliveryEstimate | null): void {
+    const wasOutOfRange = this.store.deliveryEstimate()?.outOfRange === true;
+    this.store.deliveryEstimate.set(estimate);
+
+    if (estimate?.outOfRange && !wasOutOfRange) {
+      this.journey.track({
+        type: 'address_out_of_range',
+        data: { distanceKm: Math.round(estimate.distanceKm * 10) / 10 },
+      });
     }
   }
 

@@ -14,7 +14,13 @@ export type JourneyEvent =
   | { type: 'item_removed'; data: { dishId: string; quantity: number } }
   | { type: 'cart_opened'; data: { itemCount: number } }
   | { type: 'order_submitted'; data: { itemCount: number; total: number } }
-  | { type: 'order_failed'; data: { status: number; reason?: string } };
+  | { type: 'order_failed'; data: { status: number; reason?: string } }
+  // Pasos del flujo de compra: nunca llevan nombre, teléfono ni dirección.
+  | { type: 'mode_selected'; data: { mode: 'pickup' | 'delivery' } }
+  | { type: 'customer_looked_up'; data: { known: boolean } }
+  | { type: 'address_confirmed'; data: { source: 'saved' | 'new' } }
+  | { type: 'address_out_of_range'; data: { distanceKm: number } }
+  | { type: 'summary_opened'; data: { itemCount: number; total: number } };
 
 type QueuedEvent = JourneyEvent & { occurredAt: string };
 

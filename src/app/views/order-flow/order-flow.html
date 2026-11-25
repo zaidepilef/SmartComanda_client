@@ -137,7 +137,8 @@
         [tenantId]="store.tenantId()!"
         [branchId]="store.branchId()!"
         [(delivery)]="store.delivery"
-        [(estimate)]="store.deliveryEstimate"
+        [estimate]="store.deliveryEstimate()"
+        (estimateChange)="onEstimate($event)"
       />
 
       @if (store.deliveryEstimate()?.outOfRange) {

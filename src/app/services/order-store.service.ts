@@ -249,6 +249,7 @@ export class OrderStore {
     }
 
     this.fulfillment.set(mode);
+    this.journey.track({ type: 'mode_selected', data: { mode: mode === 'delivery' ? 'delivery' : 'pickup' } });
     this.goTo('phone');
   }
 
@@ -302,6 +303,7 @@ export class OrderStore {
     }
 
     writeStorage(PHONE_KEY(tenantId), this.phone());
+    this.journey.track({ type: 'customer_looked_up', data: { known: this.known() } });
     this.step.set('identity');
   }
 
@@ -335,6 +337,7 @@ export class OrderStore {
   /** Cambio a retiro cuando el domicilio no es posible: se conserva el carrito. */
   switchToPickup(): void {
     this.fulfillment.set('qr');
+    this.journey.track({ type: 'mode_selected', data: { mode: 'pickup' } });
     this.expectedPaymentMethod.set(null);
     this.cashTendered.set(null);
     this.goTo(this.step() === 'summary' ? 'summary' : 'menu');
@@ -366,6 +369,13 @@ export class OrderStore {
 
   private enterSummary(): void {
     this.clientRequestId = uuidV4();
+    // La API rechaza el lote completo si el resumen llega sin ítems.
+    if (this.cartCount() > 0) {
+      this.journey.track({
+        type: 'summary_opened',
+        data: { itemCount: this.cartCount(), total: this.cartTotal() },
+      });
+    }
     const options = this.paymentOptions();
     const current = this.expectedPaymentMethod();
 
