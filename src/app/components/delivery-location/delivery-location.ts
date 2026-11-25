@@ -14,7 +14,7 @@ import { lastValueFrom } from 'rxjs';
 import * as L from 'leaflet';
 
 import { GeolocationService, geolocationErrorMessage } from '../../services/geolocation.service';
-import { DeliveryEstimate, DeliveryInput } from '../../services/order-store.service';
+import { DeliveryEstimate, DeliveryInput } from '../../services/api-types';
 import { PublicApiService } from '../../services/public-api.service';
 
 /** Centro inicial del mapa antes de conocer la ubicación del cliente (Santiago). */
