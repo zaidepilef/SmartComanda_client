@@ -20,15 +20,15 @@
     }
 
     @if (order.status === 'rejected') {
+      <!-- El titular ya dice el estado; aquí va solo el motivo y qué significa. -->
       <div class="rejected" role="alert">
-        <strong>{{ statusLabels.rejected }}</strong>
         @if (order.rejectionReason) {
-          <p>Motivo: {{ order.rejectionReason }}</p>
+          <p><strong>Motivo:</strong> {{ order.rejectionReason }}</p>
         }
+        <p>No se te cobrará nada por este pedido.</p>
       </div>
     } @else if (order.status === 'cancelled') {
       <div class="rejected" role="alert">
-        <strong>{{ statusLabels.cancelled }}</strong>
         <p>Si tienes dudas, consulta en el local con tu número de pedido.</p>
       </div>
     } @else {

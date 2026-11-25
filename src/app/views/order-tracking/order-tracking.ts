@@ -36,7 +36,6 @@ export class OrderTrackingView implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly formatPrice = formatPrice;
-  readonly statusLabels = STATUS_LABELS;
   readonly methodLabels = METHOD_LABELS;
 
   readonly receipt = signal<ActiveOrderReceipt | null>(null);

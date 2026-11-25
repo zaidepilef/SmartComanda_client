@@ -77,6 +77,10 @@
   p {
     margin: 6px 0 0;
   }
+
+  p:first-child {
+    margin-top: 0;
+  }
 }
 
 .timeline {
