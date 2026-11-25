@@ -1,73 +1,182 @@
-@if (store.step() === 'phone') {
-  <section class="screen phone-screen">
+@if (store.step() !== 'mode' && store.step() !== 'menu') {
+  <button type="button" class="back" (click)="store.back()">← Volver</button>
+}
+
+<!-- 1. Modalidad -->
+@if (store.step() === 'mode') {
+  <section class="screen center-screen">
     <app-theme-toggle />
-    <h1>Bienvenido 👋</h1>
-    <p class="subtitle">Dejanos tu nombre y tu WhatsApp para armar tu pedido</p>
 
-    <form (ngSubmit)="savePhone()" class="phone-form">
-      <label for="name">Nombre</label>
-      <input
-        id="name"
-        type="text"
-        inputmode="text"
-        placeholder="Tu nombre"
-        [(ngModel)]="nameInput"
-        name="name"
-        autocomplete="name"
-        [maxlength]="80"
-      />
+    @if (store.menu(); as menu) {
+      <h1>{{ menu.tenancy.businessName }}</h1>
+      <p class="subtitle">{{ menu.tenancy.branchName }}</p>
+      <h2>¿Cómo quieres tu pedido?</h2>
 
-      @if (nameError()) {
-        <p class="field-error">{{ nameError() }}</p>
+      <div class="mode-options">
+        <button type="button" class="mode-card" (click)="store.chooseMode('qr')">
+          <span class="mode-icon">🏪</span>
+          <span class="mode-title">Retiro en local</span>
+          <span class="mode-hint">Pagas en caja y lo retiras aquí</span>
+        </button>
+
+        <button
+          type="button"
+          class="mode-card"
+          [disabled]="!menu.deliveryAvailable"
+          (click)="store.chooseMode('delivery')"
+        >
+          <span class="mode-icon">🛵</span>
+          <span class="mode-title">Domicilio</span>
+          <span class="mode-hint">
+            {{ menu.deliveryAvailable ? 'Te lo llevamos y pagas al recibir' : 'Este local no hace despacho' }}
+          </span>
+        </button>
+      </div>
+    } @else if (!store.error()) {
+      <p class="subtitle">Cargando…</p>
+    }
+  </section>
+}
+
+<!-- 2. Teléfono -->
+@if (store.step() === 'phone') {
+  <section class="screen center-screen">
+    <h1>Tu celular</h1>
+    <p class="subtitle">Así te reconocemos la próxima vez</p>
+
+    <form class="stack" (ngSubmit)="submitPhone()">
+      <label for="phone">Celular</label>
+      <div class="phone-field">
+        <span class="phone-prefix">{{ mobilePrefix }}</span>
+        <input
+          id="phone"
+          type="tel"
+          inputmode="numeric"
+          autocomplete="tel-national"
+          placeholder="12345678"
+          [value]="store.phoneDigits()"
+          (input)="onPhoneInput($event)"
+          name="phone"
+        />
+      </div>
+
+      @if (store.phoneDigits().length > 0 && !phoneComplete()) {
+        <p class="field-hint">Faltan dígitos: son {{ mobileDigits }} después de {{ mobilePrefix }}.</p>
       }
 
-      <label for="phone">WhatsApp</label>
-      <input
-        id="phone"
-        type="tel"
-        inputmode="tel"
-        placeholder="+56912345678"
-        [(ngModel)]="phoneInput"
-        name="phone"
-        autocomplete="tel"
-      />
-
-      @if (phoneError()) {
-        <p class="field-error">{{ phoneError() }}</p>
-      }
-
-      <button type="submit" [disabled]="!canSubmitPhone()">Continuar</button>
+      <button type="submit" [disabled]="!phoneComplete() || store.lookingUp()">
+        {{ store.lookingUp() ? 'Buscando…' : 'Continuar' }}
+      </button>
     </form>
   </section>
 }
 
+<!-- 3. Saludo o nombre -->
+@if (store.step() === 'identity') {
+  <section class="screen center-screen">
+    @if (greeting(); as firstName) {
+      <h1>¡Qué rico volver a verte, {{ firstName }}! 😋</h1>
+      <button type="button" class="wide" (click)="continueIdentity()">Continuar</button>
+      <button type="button" class="link" (click)="notMe()">¿No eres tú?</button>
+    } @else {
+      <h1>¿Cómo te llamas?</h1>
+      <p class="subtitle">Te llamaremos por tu nombre cuando esté listo</p>
+
+      <form class="stack" (ngSubmit)="continueIdentity()">
+        <label for="name">Nombre</label>
+        <input
+          id="name"
+          type="text"
+          autocomplete="name"
+          placeholder="Tu nombre"
+          [maxlength]="nameMaxLength"
+          [ngModel]="nameInput()"
+          (ngModelChange)="nameInput.set($event)"
+          name="name"
+        />
+        <button type="submit" [disabled]="!nameValid()">Continuar</button>
+      </form>
+    }
+  </section>
+}
+
+<!-- 4. Dirección (domicilio) -->
+@if (store.step() === 'address') {
+  <section class="screen">
+    <h1>¿Dónde te lo llevamos?</h1>
+
+    @if (store.savedAddresses().length > 0) {
+      <div class="address-list" role="radiogroup" aria-label="Direcciones guardadas">
+        @for (address of store.savedAddresses(); track address.id) {
+          <button
+            type="button"
+            role="radio"
+            class="option"
+            [attr.aria-checked]="store.addressChoice().kind === 'saved' && $any(store.addressChoice()).id === address.id"
+            [class.active]="store.addressChoice().kind === 'saved' && $any(store.addressChoice()).id === address.id"
+            (click)="useSavedAddress(address.id)"
+          >
+            📍 {{ address.label }}
+          </button>
+        }
+        <button
+          type="button"
+          role="radio"
+          class="option"
+          [attr.aria-checked]="store.addressChoice().kind === 'new'"
+          [class.active]="store.addressChoice().kind === 'new'"
+          (click)="useNewAddress()"
+        >
+          ➕ Otra dirección
+        </button>
+      </div>
+    }
+
+    @if (store.addressChoice().kind === 'new') {
+      <app-delivery-location
+        [tenantId]="store.tenantId()!"
+        [branchId]="store.branchId()!"
+        [(delivery)]="store.delivery"
+        [estimate]="store.deliveryEstimate()"
+        (estimateChange)="onEstimate($event)"
+      />
+
+      @if (store.deliveryEstimate()?.outOfRange) {
+        <button type="button" class="secondary wide" (click)="pickupInstead()">🏪 Retirar en el local</button>
+      }
+    } @else {
+      <p class="field-hint">Revisaremos que la dirección esté dentro de la zona de reparto al confirmar.</p>
+    }
+
+    <button type="button" class="wide" [disabled]="!store.addressReady()" (click)="continueAddress()">
+      Continuar al menú
+    </button>
+  </section>
+}
+
+<!-- 5. Menú -->
 @if (store.step() === 'menu' && store.menu(); as menu) {
   <section class="screen menu-screen">
     <header class="menu-header">
+      <button type="button" class="back inline" (click)="store.back()">← Volver</button>
       <app-theme-toggle />
       <h1>{{ menu.tenancy.businessName }}</h1>
-      <p class="subtitle">{{ menu.tenancy.branchName }}</p>
-
-      @if (pointsLabel()) {
-        <p class="points-label">⭐ {{ pointsLabel() }}</p>
-      }
+      <p class="subtitle">
+        {{ store.fulfillment() === 'delivery' ? '🛵 Domicilio' : '🏪 Retiro en local' }} · {{ store.name() }}
+      </p>
     </header>
 
     <input
       class="search"
       type="search"
       placeholder="Buscar plato..."
-      [(ngModel)]="query"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
       name="query"
     />
 
     <nav class="categories">
-      <button
-        [class.active]="activeCategory() === 'all'"
-        (click)="activeCategory.set('all')"
-      >
-        Todos
-      </button>
+      <button [class.active]="activeCategory() === 'all'" (click)="activeCategory.set('all')">Todos</button>
 
       @for (category of store.categories(); track category.name) {
         <button
@@ -105,30 +214,23 @@
         <section class="cart-panel" (click)="$event.stopPropagation()">
           <h2>Tu pedido</h2>
 
-          @for (item of store.cart(); track item.dish.id) {
+          @for (item of store.cart(); track item.key) {
             <div class="cart-item">
               <div class="cart-item-info">
                 <span>{{ item.dish.name }}</span>
+                @if (item.note) {
+                  <span class="note">📝 {{ item.note }}</span>
+                }
                 <span class="muted">{{ formatPrice(item.dish.price) }} c/u</span>
               </div>
 
               <div class="stepper">
-                <button
-                  (click)="changeQuantity(item, -1)"
-                >
-                  −
-                </button>
+                <button (click)="changeQuantity(item, -1)">−</button>
                 <span>{{ item.quantity }}</span>
-                <button
-                  (click)="changeQuantity(item, 1)"
-                >
-                  +
-                </button>
+                <button (click)="changeQuantity(item, 1)">+</button>
               </div>
 
-              <span class="cart-item-total">
-                {{ formatPrice(item.dish.price * item.quantity) }}
-              </span>
+              <span class="cart-item-total">{{ formatPrice(item.dish.price * item.quantity) }}</span>
             </div>
           }
 
@@ -137,49 +239,9 @@
             <strong>{{ formatPrice(store.cartTotal()) }}</strong>
           </div>
 
-          <div class="fulfillment" role="radiogroup" aria-label="¿Cómo recibes tu pedido?">
-            <button
-              type="button"
-              role="radio"
-              [attr.aria-checked]="store.fulfillment() === 'qr'"
-              [class.active]="store.fulfillment() === 'qr'"
-              (click)="setFulfillment('qr')"
-            >
-              🏪 Retiro en local
-            </button>
-            <button
-              type="button"
-              role="radio"
-              [attr.aria-checked]="store.fulfillment() === 'delivery'"
-              [class.active]="store.fulfillment() === 'delivery'"
-              (click)="setFulfillment('delivery')"
-            >
-              🛵 Domicilio
-            </button>
-          </div>
-
-          @if (store.fulfillment() === 'delivery') {
-            <app-delivery-location
-              [tenantId]="store.tenantId()!"
-              [branchId]="store.branchId()!"
-              [(delivery)]="store.delivery"
-              [(estimate)]="store.deliveryEstimate"
-            />
-          }
-
-          <button
-            class="confirm"
-            [disabled]="submitting() || !canSubmitOrder()"
-            (click)="submitOrder()"
-          >
-            {{ submitting() ? 'Enviando...' : 'Enviar pedido' }}
+          <button class="confirm" [disabled]="store.cartCount() === 0" (click)="goToSummary()">
+            Continuar
           </button>
-
-          @if (store.fulfillment() === 'delivery') {
-            <p class="pay-note">El local confirmará tu pedido y la forma de pago.</p>
-          } @else {
-            <p class="pay-note">💵 Pagás en caja con tu número de pedido.</p>
-          }
         </section>
       </div>
     }
@@ -195,6 +257,17 @@
           }
 
           <p class="dish-price large">{{ formatPrice(dish.price) }}</p>
+
+          <label for="itemNote" class="note-label">Nota para la cocina (opcional)</label>
+          <textarea
+            id="itemNote"
+            rows="2"
+            placeholder="Ej.: sin mayo, sin tomate"
+            [maxlength]="noteMaxLength"
+            [ngModel]="selectedNote()"
+            (ngModelChange)="selectedNote.set($event)"
+            name="itemNote"
+          ></textarea>
 
           <div class="stepper">
             <button (click)="selectedQuantity.set(selectedQuantity() - 1)" [disabled]="selectedQuantity() <= 1">
@@ -213,37 +286,88 @@
   </section>
 }
 
-@if (store.step() === 'success' && store.orderResult(); as result) {
-  <section class="screen success-screen">
-    <h1>✅ Pedido enviado</h1>
-
-    <p class="order-number">
-      Tu número de pedido es
-      <strong>#{{ result.number }}</strong>
+<!-- 6. Resumen -->
+@if (store.step() === 'summary') {
+  <section class="screen">
+    <h1>Revisa tu pedido</h1>
+    <p class="subtitle">
+      {{ store.fulfillment() === 'delivery' ? '🛵 Domicilio' : '🏪 Retiro en local' }} · {{ store.name() }} ·
+      {{ store.phone() }}
     </p>
 
-    <p class="subtitle">Total a pagar: {{ formatPrice(result.total) }}</p>
-    @if (result.orderType === 'delivery') {
-      @if (result.deliveryEtaMinutes) {
-        <p class="subtitle">🛵 Llegada estimada: ~{{ result.deliveryEtaMinutes }} min después de prepararlo.</p>
+    <div class="summary-items">
+      @for (item of store.cart(); track item.key) {
+        <div class="summary-item">
+          <span>{{ item.quantity }} × {{ item.dish.name }}</span>
+          <span>{{ formatPrice(item.dish.price * item.quantity) }}</span>
+          @if (item.note) {
+            <span class="note">📝 {{ item.note }}</span>
+          }
+        </div>
       }
-      <p class="subtitle">El local confirmará tu pedido y la forma de pago.</p>
+      <div class="cart-total">
+        <span>Total</span>
+        <strong>{{ formatPrice(store.cartTotal()) }}</strong>
+      </div>
+    </div>
+
+    @if (store.fulfillment() === 'delivery') {
+      <p class="pay-banner">💵 Pagas al recibir tu pedido</p>
+      <h2>¿Cómo pagarás al recibir?</h2>
     } @else {
-      <p class="subtitle">💵 Pagá en caja con este número.</p>
+      <p class="pay-banner">🏪 Pagas en caja antes de que preparemos tu pedido</p>
+      <h2>¿Cómo pagarás en caja?</h2>
     }
 
-    @if (result.pointsRate) {
-      <p class="points-label">
-        ⭐ Por este pedido ganarás
-        <strong>{{ getEarnedPoints(result) }}</strong> puntos
-        (saldo actual: {{ result.pointsBalance }})
-      </p>
+    <div class="payment-options" role="radiogroup" aria-label="Medio de pago">
+      @for (method of store.paymentOptions(); track method) {
+        <button
+          type="button"
+          role="radio"
+          class="option"
+          [attr.aria-checked]="store.expectedPaymentMethod() === method"
+          [class.active]="store.expectedPaymentMethod() === method"
+          (click)="store.setPaymentMethod(method)"
+        >
+          {{ paymentLabels[method] }}
+        </button>
+      } @empty {
+        <p class="field-hint">Este local no tiene medios de pago disponibles para esta modalidad.</p>
+      }
+    </div>
+
+    @if (store.expectedPaymentMethod() === 'cash') {
+      <label for="cashTendered">¿Con cuánto pagas? (opcional, para llevar vuelto)</label>
+      <input
+        id="cashTendered"
+        type="text"
+        inputmode="numeric"
+        placeholder="Ej.: 10000"
+        [value]="store.cashTendered() ?? ''"
+        (input)="onCashTendered($any($event.target).value)"
+        name="cashTendered"
+      />
+      @if (store.cashTendered() !== null) {
+        @if (store.change() !== null) {
+          <p class="field-hint">Vuelto: {{ formatPrice(store.change()!) }}</p>
+        } @else {
+          <p class="field-error">Debe cubrir el total de {{ formatPrice(store.cartTotal()) }}.</p>
+        }
+      }
     }
 
-    <button (click)="switchTo('menu')">Hacer otro pedido</button>
+    <p class="field-hint">Elegir el medio de pago no es pagar: {{ store.fulfillment() === 'delivery' ? 'pagas cuando llega tu pedido.' : 'pagas en caja con tu número de pedido.' }}</p>
+
+    <button class="confirm wide" [disabled]="!store.canConfirm() || store.submitting()" (click)="confirmOrder()">
+      {{ confirmLabel() }}
+    </button>
+
+    @if (offerPickup()) {
+      <button type="button" class="secondary wide" (click)="pickupInstead()">🏪 Cambiar a retiro en local</button>
+    }
   </section>
 }
 
 @if (store.error()) {
-  <p class="global-error">{{ store.error() }}</p>
+  <p class="global-error" role="alert">{{ store.error() }}</p>
 }
