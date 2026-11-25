@@ -1,0 +1,99 @@
+.delivery {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.locate {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.locate:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.map {
+  height: 220px;
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  z-index: 0;
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.hint.warn,
+.location-error {
+  color: var(--error);
+}
+
+.location-error {
+  margin: 0;
+  font-size: 14px;
+}
+
+.estimate {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--badge-bg);
+  color: var(--badge-ink);
+  font-size: 14px;
+}
+
+.estimate.out {
+  background: var(--error-bg);
+  color: var(--error-ink);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+:host ::ng-deep .delivery-pin {
+  width: 26px;
+  height: 26px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--accent, #c2410c);
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 40%);
+  transform: rotate(-45deg);
+  box-sizing: border-box;
+}

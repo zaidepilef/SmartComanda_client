@@ -1,0 +1,54 @@
+<div class="delivery">
+  <button type="button" class="locate" (click)="useMyLocation()" [disabled]="locating()">
+    {{ locating() ? 'Buscando tu ubicación…' : '📍 Usar mi ubicación' }}
+  </button>
+
+  @if (locationError()) {
+    <p class="location-error" role="alert">{{ locationError() }}</p>
+  }
+
+  <div #mapEl class="map" aria-label="Mapa para marcar el punto de entrega"></div>
+  <p class="hint">Toca el mapa o arrastra el marcador hasta tu puerta.</p>
+
+  @if (delivery().accuracy; as accuracy) {
+    @if (accuracy > 100) {
+      <p class="hint warn">La ubicación es aproximada (±{{ accuracy }} m). Ajusta el marcador si no es exacta.</p>
+    }
+  }
+
+  <label for="deliveryAddress">Dirección</label>
+  <input
+    id="deliveryAddress"
+    type="text"
+    autocomplete="street-address"
+    maxlength="200"
+    placeholder="Calle y número, comuna"
+    [ngModel]="delivery().address"
+    (ngModelChange)="updateAddress($event)"
+    name="deliveryAddress"
+  />
+
+  <label for="deliveryReference">Referencia (opcional)</label>
+  <input
+    id="deliveryReference"
+    type="text"
+    maxlength="200"
+    placeholder="Depto, block, color de la casa…"
+    [ngModel]="delivery().reference ?? ''"
+    (ngModelChange)="updateReference($event)"
+    name="deliveryReference"
+  />
+
+  @if (estimating()) {
+    <p class="estimate muted">Calculando tiempo de llegada…</p>
+  } @else if (estimate(); as value) {
+    <p class="estimate" [class.out]="value.outOfRange">
+      @if (value.outOfRange) {
+        ⚠️ Este punto está fuera de nuestra zona de reparto (~{{ formatKm(value.distanceKm) }} km).
+        Elige otra dirección o retira en el local.
+      } @else {
+        🛵 Llegamos en ~{{ value.etaMinutes }} min ({{ formatKm(value.distanceKm) }} km), más la preparación.
+      }
+    </p>
+  }
+</div>

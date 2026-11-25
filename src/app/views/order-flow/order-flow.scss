@@ -1,5 +1,6 @@
 :host {
   display: block;
+  position: relative;
   min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
@@ -27,13 +28,15 @@ h1 {
   color: var(--muted);
 }
 
-.phone-screen,
-.success-screen {
-  padding-top: 20vh;
+.center-screen {
+  padding-top: 14vh;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.phone-form {
+.stack {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -254,27 +257,9 @@ button:disabled {
   padding-top: 12px;
 }
 
-.pay-note {
-  color: var(--muted);
-  text-align: center;
-  font-size: 14px;
-  margin: 0;
-}
-
 .confirm {
   width: 100%;
   font-size: 17px;
-}
-
-.success-screen {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  align-items: center;
-}
-
-.order-number {
-  font-size: 18px;
 }
 
 .global-error {
@@ -289,4 +274,182 @@ button:disabled {
   text-align: center;
   margin: 0;
   z-index: 50;
+}
+
+h2 {
+  font-size: 18px;
+  margin: 18px 0 10px;
+}
+
+label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  resize: vertical;
+}
+
+.back {
+  display: block;
+  margin: 8px 0 0 4px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.back.inline {
+  position: static;
+  margin: 0 0 8px -12px;
+}
+
+.wide {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border: 2px solid var(--accent);
+}
+
+.link {
+  background: transparent;
+  color: var(--muted);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+.mode-options {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 16px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.mode-icon {
+  font-size: 36px;
+}
+
+.mode-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.mode-hint {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.phone-field {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+
+  input {
+    border: none;
+    border-radius: 0;
+    letter-spacing: 2px;
+  }
+}
+
+.phone-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--badge-bg);
+  color: var(--badge-ink);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.address-list,
+.payment-options {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.option {
+  text-align: left;
+  padding: 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.option.active {
+  border-color: var(--accent);
+  background: var(--badge-bg);
+}
+
+.note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.note-label {
+  align-self: flex-start;
+}
+
+.summary-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.summary-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+
+  .note {
+    grid-column: 1 / -1;
+  }
+}
+
+.pay-banner {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--badge-bg);
+  color: var(--badge-ink);
+  font-weight: 700;
 }
