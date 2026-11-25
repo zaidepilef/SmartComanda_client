@@ -44,8 +44,8 @@
   } @else if (estimate(); as value) {
     <p class="estimate" [class.out]="value.outOfRange">
       @if (value.outOfRange) {
-        ⚠️ Estás fuera de nuestra zona habitual de reparto (~{{ formatKm(value.distanceKm) }} km, ~{{ value.etaMinutes }} min).
-        Puedes enviar el pedido igual; el local te confirmará.
+        ⚠️ Este punto está fuera de nuestra zona de reparto (~{{ formatKm(value.distanceKm) }} km).
+        Elige otra dirección o retira en el local.
       } @else {
         🛵 Llegamos en ~{{ value.etaMinutes }} min ({{ formatKm(value.distanceKm) }} km), más la preparación.
       }

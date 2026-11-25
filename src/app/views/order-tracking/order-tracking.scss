@@ -1,0 +1,170 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.screen {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 24px 0 0;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 13px;
+}
+
+.number {
+  font-size: 48px;
+  margin: 0;
+}
+
+.headline {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.payment {
+  align-self: center;
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--badge-bg);
+  color: var(--badge-ink);
+  font-weight: 700;
+
+  &.paid {
+    background: #dcfce7;
+    color: #166534;
+  }
+}
+
+.method {
+  font-weight: 500;
+}
+
+.hint {
+  color: var(--muted);
+  margin: 0;
+
+  &.small {
+    font-size: 13px;
+  }
+
+  &.warn {
+    color: var(--error);
+  }
+}
+
+.rejected {
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--error-bg);
+  color: var(--error-ink);
+
+  p {
+    margin: 6px 0 0;
+  }
+}
+
+.timeline {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+  }
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  li.done {
+    color: var(--ink);
+
+    .dot {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+  }
+
+  li.current {
+    color: var(--ink);
+    font-weight: 700;
+
+    .dot {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--badge-bg);
+    }
+  }
+}
+
+.items {
+  text-align: left;
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+}
+
+.note {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+button {
+  padding: 14px 18px;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wide {
+  width: 100%;
+}

@@ -1,0 +1,92 @@
+<section class="screen">
+  <app-theme-toggle />
+
+  @if (order(); as order) {
+    <p class="eyebrow">Tu pedido</p>
+    <h1 class="number">#{{ order.number }}</h1>
+    <p class="headline" aria-live="polite">{{ headline() }}</p>
+
+    @if (payment(); as payment) {
+      <p class="payment" [class.paid]="payment.paid">
+        {{ payment.text }}
+        @if (!payment.paid && order.expectedPaymentMethod) {
+          <span class="method">· {{ methodLabels[order.expectedPaymentMethod] }}</span>
+        }
+      </p>
+    }
+
+    @if (order.paymentStatus === 'declined') {
+      <p class="hint">El cobro con tarjeta no pasó. Puedes pagar con otro medio.</p>
+    }
+
+    @if (order.status === 'rejected') {
+      <div class="rejected" role="alert">
+        <strong>{{ statusLabels.rejected }}</strong>
+        @if (order.rejectionReason) {
+          <p>Motivo: {{ order.rejectionReason }}</p>
+        }
+      </div>
+    } @else if (order.status === 'cancelled') {
+      <div class="rejected" role="alert">
+        <strong>{{ statusLabels.cancelled }}</strong>
+        <p>Si tienes dudas, consulta en el local con tu número de pedido.</p>
+      </div>
+    } @else {
+      <ol class="timeline">
+        @for (step of timeline(); track step.label) {
+          <li [class]="step.state">
+            <span class="dot"></span>
+            <span>{{ step.label }}</span>
+          </li>
+        }
+      </ol>
+    }
+
+    @if (order.orderType === 'delivery' && order.deliveryEtaMinutes && (order.status === 'received' || order.status === 'preparing')) {
+      <p class="hint">🛵 Llegada estimada: ~{{ order.deliveryEtaMinutes }} min después de prepararlo.</p>
+    }
+
+    @if (order.status === 'awaiting_payment') {
+      <p class="hint">💵 Acércate a la caja con tu número para pagar; después lo preparamos.</p>
+    }
+
+    <div class="items">
+      @for (item of order.items; track $index) {
+        <div class="item">
+          <span>{{ item.quantity }} × {{ item.name }}</span>
+          <span>{{ formatPrice(item.price * item.quantity) }}</span>
+          @if (item.note) {
+            <span class="note">📝 {{ item.note }}</span>
+          }
+        </div>
+      }
+      <div class="total">
+        <span>Total</span>
+        <strong>{{ formatPrice(order.total) }}</strong>
+      </div>
+    </div>
+
+    @if (offline()) {
+      <p class="hint warn">Sin conexión. Reintentando…</p>
+    }
+
+    @if (finished()) {
+      <button type="button" class="wide" (click)="newOrder()">Hacer otro pedido</button>
+    } @else {
+      <p class="hint small">Esta pantalla se actualiza sola. Puedes cerrarla y volver a escanear el QR.</p>
+    }
+  } @else if (receipt(); as receipt) {
+    <p class="eyebrow">Tu pedido</p>
+    <h1 class="number">#{{ receipt.number }}</h1>
+
+    @if (receipt.trackingToken) {
+      <p class="hint">{{ offline() ? 'Sin conexión. Reintentando…' : 'Cargando el estado…' }}</p>
+    } @else {
+      <p class="headline">Pedido recibido</p>
+      <p class="hint">
+        No pudimos abrir el seguimiento en este teléfono. Consulta en el local con tu número de pedido.
+      </p>
+      <button type="button" class="wide" (click)="newOrder()">Hacer otro pedido</button>
+    }
+  }
+</section>

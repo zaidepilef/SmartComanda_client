@@ -1,6 +1,7 @@
 import { DestroyRef, Injectable, inject } from '@angular/core';
 
 import { environment } from '../../environments/environment';
+import { uuidV4 } from '../utils/uuid';
 
 // Eventos del recorrido del cliente (spec customer-journey-tracking).
 // order_created no se envía desde aquí: lo registra el servidor.
@@ -27,16 +28,6 @@ const URGENT_TYPES = new Set<JourneyEvent['type']>([
   'order_failed',
   'menu_failed',
 ]);
-
-// UUID v4 con getRandomValues: crypto.randomUUID no existe fuera de HTTPS
-// (p. ej. al probar desde el teléfono con http://IP-local).
-function uuidV4(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
 
 function readSession(key: string): string | null {
   try {
